@@ -2,7 +2,7 @@ import streamlit as st
 import numpy as np
 import tensorflow as tf
 from sklearn.preprocessing import StandardScaler, LabelEncoder, OneHotEncoder
-import pandas as p
+import pandas as pd
 import pickle
 
 # Load the trained model
@@ -19,12 +19,13 @@ with open("scaler.pkl", "rb") as file:
     scaler = pickle.load(file)
 
 # Streamlit App
-st.title("BAKER'S CHURN PREDICTION")
+st.title("BANKER'S CHURN PREDICTION")
 
 # User Input
 geography = st.selectbox("Geography", o.categories_[0])
 gender = st.selectbox("Gender", l.classes_)
 age = st.slider("Age", 18, 92)
+
 balance = st.number_input("Balance")
 credit_score = st.number_input("Credit Score")
 estimated_salary = st.number_input("Estimated Salary")
@@ -34,7 +35,7 @@ has_cr_card = st.selectbox("Has Credit Card", [0, 1])
 is_active_member = st.selectbox("Is Active Member", [0, 1])
 
 # Create input DataFrame
-input_data = p.DataFrame({
+input_data = pd.DataFrame({
     "CreditScore": [credit_score],
     "Gender": [l.transform([gender])[0]],
     "Age": [age],
@@ -47,18 +48,22 @@ input_data = p.DataFrame({
 })
 
 # OneHot Encode Geography
-geo_encoded = o.transform([[geography]]).toarray()
+geo_encoded = o.transform([[geography]])
+if isinstance(geo_encoded, np.ndarray):
+    geo_encoded = geo_encoded
+else:
+    geo_encoded = geo_encoded.toarray()
 geo_feature_names = o.get_feature_names_out(["Geography"])
-geo_encoded_df = p.DataFrame(geo_encoded, columns=geo_feature_names)
+geo_encoded_df = pd.DataFrame(geo_encoded, columns=geo_feature_names)
 
 # Combine the onehot encoded geography with other features
-input_data = p.concat([input_data.reset_index(drop=True), geo_encoded_df], axis=1)
+input_data = pd.concat([input_data.reset_index(drop=True), geo_encoded_df], axis=1)
 
 # Scale the input data
 input_scaled = scaler.transform(input_data)
 
 # Make prediction
-prediction = model.predict(input_scaled)
+prediction = model.predict(input_scaled) 
 prediction_probability = prediction[0][0]
 
 # Display prediction result
